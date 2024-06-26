@@ -3,6 +3,17 @@ import os
 from pprint import pprint as print
 import sys
 
+from langchain_text_splitters import (
+    Language,
+    RecursiveCharacterTextSplitter
+)
+
+rst_splitter = RecursiveCharacterTextSplitter.from_language(
+    language=Language.RST,
+    chunk_size=8000,
+    chunk_overlap=0
+)
+
 class Visitor(ast.NodeVisitor):
     def __init__(self):
         self.functions = []         # [[fn_nane1, docstring], ......]
@@ -13,9 +24,7 @@ class Visitor(ast.NodeVisitor):
         if self.depth == 1:     # it's inside a class, last elem in self.classes is the specified class
             class_data = self.classes[-1]
             method_data = class_data[1]
-
             method_data.append([node.name, ast.get_docstring(node)])
-
         else:
             self.functions.append([node.name, ast.get_docstring(node)])
 
@@ -23,7 +32,6 @@ class Visitor(ast.NodeVisitor):
         if self.depth == 1:     # it's inside a class, last elem in self.classes is the specified class
             class_data = self.classes[-1]
             method_data = class_data[1]
-
             method_data.append([node.name, ast.get_docstring(node)])
         else:
             self.functions.append([node.name, ast.get_docstring(node)])
@@ -45,7 +53,6 @@ def source_code_metadata_generator(filepath: str):
     
     with open(filepath, "r") as f:
         source_code = f.read()
-
     tree = ast.parse(source_code)
     visitor = Visitor()
     visitor.visit(tree)
@@ -64,21 +71,30 @@ def traverse_directory_tree(root_dir):
 
                 for function in fn_list:
                     data = {}
+                    data['type'] = "function"
                     data['path'] = f"{dirpath}/{filename}"
                     data["function_name"] = f"{function[0]}"
                     data["docstring"] = f"{function[1]}"
-                    
                     json.append(data)
 
                 for class_ in class_list:
                     data = {}
+                    data['type'] = "class"
                     data['path'] = f"{dirpath}/{filename}"
                     data["class_name"] = f"{class_[0][0]}"
                     data["docstring"] = f"{class_[0][1]}"
                     data["class_methods"] = [method for method in class_[1]]
-
                     json.append(data)
-    
+
+            elif filename.endswith(".rst"):
+                with open(filepath, "r") as f:
+                    source_code = f.read()
+                data = {}
+                data['type'] = 'rst'
+                data['path'] = f"{dirpath}/{filename}"
+                data['content'] = [x.page_content for x in rst_splitter.create_documents([source_code])]
+                json.append(data)
+
     return json
 
 
@@ -88,24 +104,54 @@ if __name__ == "__main__":
 
 """
 for upserting functions/classes JSON format (this will be embedded by the embedding model)
-
+3 types of JSON files inside res
 
 {
+    "type": "class",
     "path": "../..",
-    "function/class name": "name",
+    class_name": "name",
     "docstring": ".."
     "class_methods": ["method1", "..."]
 }
+
+{
+    "type": "function",
+    "path": "../..",
+    "function_name": "name",
+    "docstring": ".."
+}
+
+{
+    "type": "rst",
+    "path": "../..",
+    "content": [.., .., ..]
+}
+
 """
 
 
 """
 For the metadata
 
-metadata: {
+{   
+    "type": "class",
     "path": "../..",
-    "function/class name": "name",
+    "class_name": "name",
     "docstring": ".."
-    "methods": [(method1, docstring), (method2, docstring), ...]
+    "class_methods": [(method1, docstring), (method2, docstring), ...]
 }
+
+{   
+    "type: "function",
+    "path": "../..",
+    "function_name": "name",
+    "docstring": ".."
+}
+
+{
+    "type": "rst",
+    "path": "../..",
+    "content": [.., .., ..]
+}
+
 """
