@@ -14,6 +14,11 @@ rst_splitter = RecursiveCharacterTextSplitter.from_language(
     chunk_overlap=0
 )
 
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=8000,
+    chunk_overlap=0
+)
+
 class Visitor(ast.NodeVisitor):
     def __init__(self):
         self.functions = []         # [[fn_nane1, docstring], ......]
@@ -66,7 +71,16 @@ def traverse_directory_tree(root_dir):
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
             filepath = f'{dirpath}/{filename}'
-            if filename.endswith(".py"):
+            if "fury/docs/examples" in filepath and filename.endswith(".py"):
+                with open(filepath, "r") as f:
+                    source_code = f.read()
+                data = {}
+                data['type'] = 'documentation_examples'
+                data['path'] = f"{dirpath}/{filename}"
+                data['content'] = [x.page_content for x in text_splitter.create_documents([source_code])]
+                json.append(data)
+
+            elif filename.endswith(".py"):
                 fn_list, class_list = source_code_metadata_generator(filepath)
 
                 for function in fn_list:
@@ -127,6 +141,12 @@ for upserting functions/classes JSON format (this will be embedded by the embedd
     "content": [.., .., ..]
 }
 
+{
+    "type": "documentation_examples",
+    "path": "../..",
+    "content": ".."
+}
+
 """
 
 
@@ -152,6 +172,12 @@ For the metadata
     "type": "rst",
     "path": "../..",
     "content": [.., .., ..]
+}
+
+{
+    "type": "documentation_examples",
+    "path": "../..",
+    "content": ".."
 }
 
 """
