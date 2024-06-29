@@ -21,7 +21,7 @@ Verdict:
 MOONDREAM_PROMPT = "Describe this image"
 
 
-# [(LLM_PROMPT, CRITERIA), (), (), .....]
+# [(INDEX, LLM_PROMPT, CRITERIA, WORKING_CODE), (), (), .....]
 BENCHMARK_QUESTIONS = [
     (
         0, "render 3 spheres with different radii, different colors, different centers, set opacity to 0.5. There should only be 1 sphere actor that does this. Center coordinates are (0, 0, 0), (100, 0, 0), (200, 0, 0). Keep radius 10.",
