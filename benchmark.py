@@ -59,11 +59,17 @@ def llm_output(prompt: str, llm: str = "llama3-70b-8192", company: str = "groq")
 
 def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
 
-    INSTRUCTIONS = "\nCode should be inside one python block. Comment `window.show()` (Do not show on screen). Do not write code inside a function."
+    INSTRUCTIONS = "\nCode should be inside one python block. Comment `window.show()` (Do not show on screen). Do not write code inside a function. Remember to create `scene = window.Scene()`"
 
     for problem in tqdm(benchmark_questions):
-        coding_question = output_parser(problem[1] + INSTRUCTIONS)
-        # coding_question = output_parser(problem[1], llm="gemini-1.5-pro", company="google")
+
+        try:
+            coding_question = output_parser(problem[1] + INSTRUCTIONS)
+            # coding_question = output_parser(problem[1] + INSTRUCTIONS, llm="gemini-1.5-pro", company="google")
+        except:
+            print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + " JSONDecodeError" + Style.RESET_ALL)
+            continue
+
         coding_question_python_code = coding_question[2]
 
         with open("test_code.py", "w") as f:
