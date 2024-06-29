@@ -23,5 +23,17 @@ MOONDREAM_PROMPT = "Describe this image"
 
 # [(LLM_PROMPT, CRITERIA), (), (), .....]
 BENCHMARK_QUESTIONS = [
-    ("render 3 spheres with different radii, different colors, different centers, set opacity to 0.5. There should only be 1 sphere actor that does this. Code should be inside one python block. Comment `window.show()`. Center coordinates are (100, 0, 0), (200, 0, 0), (300, 0, 0). Keep radius 10.", "The image must contain 3 spheres of different colours.")
+    (
+        0, "render 3 spheres with different radii, different colors, different centers, set opacity to 0.5. There should only be 1 sphere actor that does this. Center coordinates are (100, 0, 0), (200, 0, 0), (300, 0, 0). Keep radius 10.",
+        "The image must contain 3 spheres of different colours"
+    ),
+    (
+        1, "Write 'Hello world' in FURY.",
+        "The image must contain 'Hello world' written."
+    ),
+    (
+        2, "Render 2 cones in FURY.",
+        "The image must contain 2 cones, it may look like triangles/pyramid due to 3D."
+    )
+
 ]
