@@ -163,5 +163,5 @@ cython_debug/
 
 # misc
 test.*
-code.py
-test_bench.py
+test_code.py
+output.png
