@@ -57,9 +57,22 @@ def llm_output(prompt: str, llm: str = "llama3-70b-8192", company: str = "groq")
     return verdict
 
 
-# TODO: FAST_EVAL --> disable moondream2 checks, if the code compiles it itself is a pretty good check
-def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
-    INSTRUCTIONS = "\nCode should be inside one python block. Comment `window.show()` (Do not show on screen). Do not write code inside a function. Remember to create `scene = window.Scene()`"
+def display_output(i, result: bool, reason: str):
+    if result:
+        print(Fore.GREEN + f"{i} PASSED" + Fore.BLUE + " " +  reason + Style.RESET_ALL)
+    else:
+        print(Fore.RED + f"{i} FAILED" + Fore.BLUE + " " + reason + Style.RESET_ALL)
+
+
+def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS, fast_eval: bool = False):
+    """
+    args:
+        fast_eval: disables moondream2 image verification. If the code compiles, it's said to be passed.
+    """
+
+    INSTRUCTIONS = "\nCode should be inside one python block. Comment `window.show()` (Do not show on screen). Do not write code inside a function. Remember to create `scene =     window.Scene()`"
+    success = 0
+    fail = 0
 
     for problem in tqdm(benchmark_questions):
         try:
@@ -67,6 +80,7 @@ def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
             # coding_question = output_parser(problem[1] + INSTRUCTIONS, llm="gemini-1.5-pro", company="google")
         except:
             print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + " JSONDecodeError" + Style.RESET_ALL)
+            fail += 1
             continue
 
         coding_question_python_code = coding_question[2]
@@ -74,16 +88,30 @@ def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
             f.write(coding_question_python_code)
         
         try:
-            subprocess.call(['python', 'test_bench.py'], timeout=2)
-        except:
-            print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + " TimeoutError" + Style.RESET_ALL)
+            subprocess.run(['python', 'test_bench.py'], timeout=2, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            fail += 1
+            display_output(problem[0], False, str(exc.stderr))
+            continue
+        except subprocess.TimeoutExpired as exc:
+            if fast_eval:
+                success += 1
+                display_output(problem[0], True, str(exc.stderr))
+            else:
+                fail += 1
+                display_output(problem[0], False, str(exc.stderr))
+            continue
+        except Exception as e:
+            print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + f" {e}" + Style.RESET_ALL)
+            fail += 1
             continue
 
-        try:
-            description = image_description("output.png", MOONDREAM_PROMPT)
-        except FileNotFoundError:
-            print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + " FileNotFoundError" + Style.RESET_ALL)
+        if fast_eval:
+            success += 1
+            display_output(problem[0], True, "fast eval")
             continue
+
+        description = image_description("output.png", MOONDREAM_PROMPT)
 
         os.remove("output.png")
         BENCHMARK_PROMPT = LLM_BENCHMARK_PROMPT.format(problem[2], description)
@@ -91,8 +119,16 @@ def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
 
         if (verdict == "yes"):
             print(Fore.GREEN + f"{problem[0]} PASSED" + Fore.BLUE + " Verdict: YES" + Style.RESET_ALL)
+            success += 1
         else:
             print(Fore.RED + f"{problem[0]} FAILED" + Fore.BLUE + " Vedict: NO" + Style.RESET_ALL)
+            fail += 1
+
+    eval_type = "fast eval" if fast_eval else "normal eval"
+    print("\n\n\n")
+    display_output(success, True, eval_type)
+    display_output(fail, False, eval_type)
+    display_output((success/(success+fail)*100), True, "SUCCESS %")
 
 
 def run_specific_benchmark(i: list):
@@ -100,5 +136,5 @@ def run_specific_benchmark(i: list):
     benchmark(test_cases)
 
 
-benchmark()
+benchmark(fast_eval=True)
 # run_specific_benchmark([20])
