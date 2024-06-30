@@ -7,7 +7,7 @@ import requests
 import json
 
 
-def image_description(path: str, prompt: str) -> str:
+def image_description(path: str = "output.png", prompt: str = "Describe this image") -> str:
     with open(path, "rb") as f:
         data = f.read()
     encoded_data = base64.b64encode(data).decode('utf-8')

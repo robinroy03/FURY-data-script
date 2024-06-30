@@ -57,12 +57,11 @@ def llm_output(prompt: str, llm: str = "llama3-70b-8192", company: str = "groq")
     return verdict
 
 
+# TODO: FAST_EVAL --> disable moondream2 checks, if the code compiles it itself is a pretty good check
 def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
-
     INSTRUCTIONS = "\nCode should be inside one python block. Comment `window.show()` (Do not show on screen). Do not write code inside a function. Remember to create `scene = window.Scene()`"
 
     for problem in tqdm(benchmark_questions):
-
         try:
             coding_question = output_parser(problem[1] + INSTRUCTIONS)
             # coding_question = output_parser(problem[1] + INSTRUCTIONS, llm="gemini-1.5-pro", company="google")
@@ -71,7 +70,6 @@ def benchmark(benchmark_questions: list = BENCHMARK_QUESTIONS):
             continue
 
         coding_question_python_code = coding_question[2]
-
         with open("test_code.py", "w") as f:
             f.write(coding_question_python_code)
         
@@ -103,4 +101,4 @@ def run_specific_benchmark(i: list):
 
 
 benchmark()
-# run_specific_benchmark([1])
+# run_specific_benchmark([20])
