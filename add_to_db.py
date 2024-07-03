@@ -2,8 +2,6 @@
 This script adds all the given content to the vector db
 """
 
-# NOTE: NOT TESTED IN PRODUCTION (YET)
-
 import os
 import sys
 
