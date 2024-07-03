@@ -21,28 +21,28 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 class Visitor(ast.NodeVisitor):
     def __init__(self):
-        self.functions = []         # [[fn_nane1, docstring], ......]
-        self.classes = []           # [[[class_name1, docstring], [[method1, docstring], [method2, docstring],....]], [...], ...]
+        self.functions = []         # [[fn_name1, docstring, lineno, end_lineno], ......]
+        self.classes = []           # [[[class_name1, docstring, lineno, end_lineno], [[method1, docstring, lineno, end_lineno], [method2, docstring, lineno, end_lineno],....]], [...], ...]
         self.depth = 0
     
     def visit_FunctionDef(self, node: ast.FunctionDef):
         if self.depth == 1:     # it's inside a class, last elem in self.classes is the specified class
             class_data = self.classes[-1]
             method_data = class_data[1]
-            method_data.append([node.name, ast.get_docstring(node)])
+            method_data.append([node.name, ast.get_docstring(node), node.lineno, node.end_lineno])
         else:
-            self.functions.append([node.name, ast.get_docstring(node)])
+            self.functions.append([node.name, ast.get_docstring(node), node.lineno, node.end_lineno])
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
         if self.depth == 1:     # it's inside a class, last elem in self.classes is the specified class
             class_data = self.classes[-1]
             method_data = class_data[1]
-            method_data.append([node.name, ast.get_docstring(node)])
+            method_data.append([node.name, ast.get_docstring(node), node.lineno, node.end_lineno])
         else:
-            self.functions.append([node.name, ast.get_docstring(node)])
+            self.functions.append([node.name, ast.get_docstring(node), node.lineno, node.end_lineno])
     
     def visit_ClassDef(self, node: ast.ClassDef):
-        self.classes.append([[node.name, ast.get_docstring(node)], []])
+        self.classes.append([[node.name, ast.get_docstring(node), node.lineno, node.end_lineno], []])
         self.depth += 1
 
         for item in node.body:
@@ -89,6 +89,7 @@ def traverse_directory_tree(root_dir):
                     data['path'] = f"{dirpath}/{filename}"
                     data["function_name"] = f"{function[0]}"
                     data["docstring"] = f"{function[1]}"
+                    data["lineno"] = [function[2], function[3]]
                     json.append(data)
 
                 for class_ in class_list:
@@ -97,6 +98,7 @@ def traverse_directory_tree(root_dir):
                     data['path'] = f"{dirpath}/{filename}"
                     data["class_name"] = f"{class_[0][0]}"
                     data["docstring"] = f"{class_[0][1]}"
+                    data["lineno"] = [class_[0][2], class_[0][3]]
                     data["class_methods"] = [method for method in class_[1]]
                     json.append(data)
 
@@ -157,14 +159,16 @@ For the metadata
     "type": "class",
     "path": "../..",
     "class_name": "name",
-    "docstring": ".."
-    "class_methods": [(method1, docstring), (method2, docstring), ...]
+    "docstring": "..",
+    "lineno": [lineno, end_lineno],
+    "class_methods": [(method1, docstring, lineno), (method2, docstring, lineno), ...]
 }
 
 {   
     "type: "function",
     "path": "../..",
     "function_name": "name",
+    "lineno": [lineno, end_lineno],
     "docstring": ".."
 }
 
