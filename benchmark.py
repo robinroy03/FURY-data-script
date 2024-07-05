@@ -6,7 +6,9 @@ from tqdm import tqdm
 from colorama import Fore, Style
 
 from data.dataset import BENCHMARK_QUESTIONS, LLM_BENCHMARK_PROMPT, MOONDREAM_PROMPT
+from data.rag_dataset import RAG_QUESTIONS_V10
 from image_validator import image_description
+
 
 def output_parser(prompt: str, llm: str = "llama3-70b-8192", knn: int = 3, stream: bool = False, company: str = "groq") -> tuple[str, list, str]:
     """
@@ -136,5 +138,27 @@ def run_specific_benchmark(i: list):
     benchmark(test_cases)
 
 
-benchmark(fast_eval=True)
+def rag_benchmark(benchmark_questions: list = RAG_QUESTIONS_V10):
+    score = 0
+    total_score = len(benchmark_questions)
+
+    for problem in tqdm(benchmark_questions):
+        question = problem[1]
+        references = problem[2]
+        point_per_reference = 1/len(references)
+        response, output_references, code = output_parser(question)
+
+        for reference in references:
+            if reference in output_references:
+                score += point_per_reference
+                display_output(problem[0], True, "SUCCESS")
+            else:
+                display_output(problem[0], False, f"Reference \n{reference} not found in \n{output_references}")
+
+    print("\n\n")
+    display_output(score/total_score, True, f"% RAG Success\n{score} correct out of {total_score}")
+
+# benchmark(fast_eval=True)
 # run_specific_benchmark([20])
+
+rag_benchmark()
