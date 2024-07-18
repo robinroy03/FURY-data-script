@@ -158,7 +158,8 @@ def rag_benchmark(benchmark_questions: list = RAG_QUESTIONS_V10):
     print("\n\n")
     display_output(score/total_score, True, f"% RAG Success\n{score} correct out of {total_score}")
 
-# benchmark(fast_eval=True)
-# run_specific_benchmark([20])
 
-rag_benchmark()
+if __name__ == "__main__":
+    # benchmark(fast_eval=True)
+    # run_specific_benchmark([20])
+    rag_benchmark()
