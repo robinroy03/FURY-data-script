@@ -1,0 +1,8 @@
+body:
+  - type: textarea
+  attributes:
+    description: "Enter your question here"
+
+  - type: checkboxes
+  attributes:
+    label: Check this box if you want an AI generated answer as first response.
