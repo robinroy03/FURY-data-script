@@ -2,8 +2,8 @@ body:
   - type: textarea
     attributes:
       label: Enter your post
-      validations:
-        required: True
+    validations:
+      required: True
   - type: checkboxes
     attributes:
       label: Check this box if you want an AI-generated answer as a first response.
