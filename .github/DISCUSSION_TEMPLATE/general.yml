@@ -1,4 +1,6 @@
 body:
   - type: checkboxes
     attributes:
-      label: Check this box if you want an AI generated answer as first response.
+      label: Check this box if you want an AI-generated answer as a first response.
+      options:
+        label: I've searched existing issues
