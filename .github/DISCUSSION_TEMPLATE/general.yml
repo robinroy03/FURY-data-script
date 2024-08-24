@@ -9,5 +9,3 @@ body:
       label: Check this box if you want an AI-generated answer as a first response.
       options:
         - label: I want an AI-generated answer as a first response.
-          checked: True
-  
